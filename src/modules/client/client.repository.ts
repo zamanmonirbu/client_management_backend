@@ -1,0 +1,37 @@
+// src/modules/client/client.repository.ts
+import prisma from '../../database/connection';
+import { ClientCreateDTO, ClientUpdateDTO } from './client.types';
+
+export const createClient = async (data: ClientCreateDTO) => {
+  return prisma.client.create({
+    data: {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      address: data.address,
+      dob: new Date(data.dob),
+      email: data.email,
+      cell: data.cell,
+      companyName: data.companyName,
+      price: data.price,
+      comments: data.comments ?? null,
+    },
+  });
+};
+
+export const findAllClients = async () => {
+  return prisma.client.findMany({ orderBy: { createdAt: 'desc' } });
+};
+
+export const findClientById = async (id: number) => {
+  return prisma.client.findUnique({ where: { id } });
+};
+
+export const updateClientById = async (id: number, data: ClientUpdateDTO) => {
+  const payload: any = { ...data };
+  if (payload.dob) payload.dob = new Date(payload.dob);
+  return prisma.client.update({ where: { id }, data: payload });
+};
+
+export const deleteClientById = async (id: number) => {
+  return prisma.client.delete({ where: { id } });
+};
