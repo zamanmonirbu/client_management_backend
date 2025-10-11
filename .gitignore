@@ -23,3 +23,7 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+
+/src/generated/prisma
+
+/src/generated/prisma

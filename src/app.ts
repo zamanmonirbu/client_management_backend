@@ -10,7 +10,6 @@ applySecurity(app);
 app.get('/', (_req, res) => res.json({ ok: true }));
 app.use('/api/v1', allRoutes);
 
-
 app.use(errorHandler);
 
 export default app;

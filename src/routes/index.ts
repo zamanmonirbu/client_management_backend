@@ -1,9 +1,11 @@
 // src/routes/index.ts
-import express from 'express';
-import clientRoutes from '../modules/client/client.routes';
+import { Router } from "express";
+import clientRoutes from "../modules/client/client.routes";
+import userRoutes from "../modules/user/user.routes";
 
-const router = express.Router();
+const router = Router();
 
-router.use('/clients', clientRoutes);
+router.use("/clients", clientRoutes);
+router.use("/users", userRoutes);
 
 export default router;
