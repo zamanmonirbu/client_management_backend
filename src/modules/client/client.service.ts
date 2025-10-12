@@ -1,17 +1,29 @@
 // src/modules/client/client.service.ts
+
 import * as repo from './client.repository';
 import { ClientCreateDTO, ClientUpdateDTO } from './client.types';
 
 export const createClientService = async (payload: ClientCreateDTO) => {
-  // business rules example: enforce unique email handled by DB; add further checks or events here
   const created = await repo.createClient(payload);
   return created;
 };
 
-export const listClientsService = async () => {
-  const clients = await repo.findAllClients();
-  return clients;
+export const listClientsService = async (page = 1, limit = 10, sortOrder: 'asc' | 'desc' = 'desc') => {
+  const skip = (page - 1) * limit;
+  const { clients, total } = await repo.findAllClients(skip, limit, sortOrder);
+  const totalPages = Math.ceil(total / limit);
+  return {
+    data: clients,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages,
+      sortOrder,
+    },
+  };
 };
+
 
 export const getClientService = async (id: number) => {
   const client = await repo.findClientById(id);
@@ -20,7 +32,6 @@ export const getClientService = async (id: number) => {
 };
 
 export const updateClientService = async (id: number, payload: ClientUpdateDTO) => {
-  // possible business checks before update
   const updated = await repo.updateClientById(id, payload);
   return updated;
 };

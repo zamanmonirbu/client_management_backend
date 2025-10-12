@@ -1,16 +1,17 @@
 // src/modules/user/user.service.ts
+
 import bcrypt from "bcrypt";
-import { userRepository } from "./user.repository";
+import * as repo from "./user.repository";
 import { UserCreateDTO, UserLoginDTO, UserUpdateDTO } from "./user.types";
 import { generateAccessToken, generateRefreshToken } from "../../middleware/security";
 
-export const userService = {
-  async register(data: UserCreateDTO) {
-    const existingUser = await userRepository.findByEmail(data.email);
+
+export const registerService =  async (data: UserCreateDTO) => {
+    const existingUser = await repo.findByEmail(data.email);
     if (existingUser) throw new Error("Email already exists");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const user = await userRepository.createUser({
+    const user = await repo.createUser({
       ...data,
       password: hashedPassword,
     });
@@ -19,10 +20,10 @@ export const userService = {
     const refreshToken = generateRefreshToken({ id: user.id });
 
     return { user, accessToken, refreshToken };
-  },
+  };
 
-  async login(data: UserLoginDTO) {
-    const user = await userRepository.findByEmail(data.email);
+  export const loginService= async (data: UserLoginDTO) => {
+    const user = await repo.findByEmail(data.email);
     if (!user) throw new Error("User not found");
 
     const valid = await bcrypt.compare(data.password, user.password);
@@ -32,14 +33,14 @@ export const userService = {
     const refreshToken = generateRefreshToken({ id: user.id });
 
     return { user, accessToken, refreshToken };
-  },
+  };
 
-  async updateUser(id: number, data: UserUpdateDTO) {
+  export const updateUserService = async (id: number, data: UserUpdateDTO) => {
     if (data.password) data.password = await bcrypt.hash(data.password, 10);
-    return await userRepository.updateUser(id, data);
-  },
+    return await repo.updateUser(id, data);
+  };
 
-  async deleteUser(id: number) {
-    return await userRepository.deleteUser(id);
-  },
-};
+  export const deleteUserService = async (id: number) => {
+    return await repo.deleteUser(id);
+  };
+

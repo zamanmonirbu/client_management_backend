@@ -1,4 +1,5 @@
 // src/modules/client/client.repository.ts
+
 import prisma from '../../database/connection';
 import { ClientCreateDTO, ClientUpdateDTO } from './client.types';
 
@@ -18,9 +19,19 @@ export const createClient = async (data: ClientCreateDTO) => {
   });
 };
 
-export const findAllClients = async () => {
-  return prisma.client.findMany({ orderBy: { createdAt: 'desc' } });
+export const findAllClients = async (skip = 0, take = 10, sortOrder: 'asc' | 'desc' = 'desc') => {
+  const [clients, total] = await Promise.all([
+    prisma.client.findMany({
+      skip,
+      take,
+      orderBy: { createdAt: sortOrder },
+    }),
+    prisma.client.count(),
+  ]);
+
+  return { clients, total };
 };
+
 
 export const findClientById = async (id: number) => {
   return prisma.client.findUnique({ where: { id } });

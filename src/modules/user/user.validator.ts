@@ -1,6 +1,6 @@
 // src/modules/client/client.validator.ts
+
 import { z } from 'zod';
-import { ClientCreateDTO, ClientUpdateDTO } from './user.types';
 
 export const clientCreateSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),

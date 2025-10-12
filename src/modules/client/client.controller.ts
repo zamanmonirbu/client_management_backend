@@ -1,3 +1,5 @@
+// src/modules/client/client.controller.ts
+
 import { Request, Response, NextFunction } from 'express';
 import * as service from './client.service';
 import { ClientCreateDTO } from './client.types';
@@ -13,14 +15,19 @@ export const createClient = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const getClients = async (_req: Request, res: Response, next: NextFunction) => {
+export const getClients = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const clients = await service.listClientsService();
-    return generateResponse(res, 200, 'Clients fetched successfully', clients);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+    const result = await service.listClientsService(page, limit, sortOrder);
+    return generateResponse(res, 200, 'Clients fetched successfully', result);
   } catch (err) {
     next(err);
   }
 };
+
 
 export const getClient = async (req: Request, res: Response, next: NextFunction) => {
   try {

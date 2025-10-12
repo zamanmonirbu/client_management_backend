@@ -1,4 +1,5 @@
 // src/modules/client/client.types.ts
+
 export type ClientCreateDTO = {
   firstName: string;
   lastName: string;

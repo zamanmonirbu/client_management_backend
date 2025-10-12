@@ -1,4 +1,5 @@
 // src/routes/client.routes.ts
+
 import { Router } from 'express';
 import * as controller from './client.controller';
 import validateRequest from '../../middleware/validateRequest';

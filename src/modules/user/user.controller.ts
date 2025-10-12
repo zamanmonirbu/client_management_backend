@@ -1,43 +1,43 @@
 // src/modules/user/user.controller.ts
-import { Request, Response } from "express";
-import { userService } from "./user.service";
 
-export const userController = {
-  async register(req: Request, res: Response) {
+import { Request, Response } from "express";
+import * as service from "./user.service";
+
+
+export const registerController = async (req: Request, res: Response) => {
     try {
-      const result = await userService.register(req.body);
+      const result = await service.registerService(req.body);
       res.status(201).json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
-  },
+  };
 
-  async login(req: Request, res: Response) {
+  export const loginController = async (req: Request, res: Response) => {
     try {
-      const result = await userService.login(req.body);
+      const result = await service.loginService(req.body);
       res.json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
-  },
+  };
 
-  async update(req: Request, res: Response) {
+  export const updateController = async (req: Request, res: Response) => {
     try {
       const userId = Number(req.params.id);
-      const updated = await userService.updateUser(userId, req.body);
+      const updated = await service.updateUserService(userId, req.body);
       res.json(updated);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
-  },
+  };
 
-  async delete(req: Request, res: Response) {
+  export const deleteController = async (req: Request, res: Response) => {
     try {
       const userId = Number(req.params.id);
-      await userService.deleteUser(userId);
+      await service.deleteUserService(userId);
       res.json({ message: "User deleted successfully" });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
     }
-  },
-};
+  };

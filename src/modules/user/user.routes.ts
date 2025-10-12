@@ -1,12 +1,13 @@
 // src/modules/user/user.routes.ts
+
 import { Router } from "express";
-import { userController } from "./user.controller";
+import * as controller from "./user.controller";
 
 const router = Router();
 
-router.post("/register", userController.register);
-router.post("/login", userController.login);
-router.put("/:id", userController.update);
-router.delete("/:id", userController.delete);
+router.post("/register", controller.registerController);
+router.post("/login", controller.loginController);
+router.put("/:id", controller.updateController);
+router.delete("/:id", controller.deleteController);
 
 export default router;

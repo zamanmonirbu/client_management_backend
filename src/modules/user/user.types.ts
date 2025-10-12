@@ -1,4 +1,5 @@
 // src/modules/user/user.types.ts
+
 export type UserCreateDTO = {
   name: string;
   email: string;
