@@ -23,23 +23,27 @@ export const applySecurity = (app: express.Application) => {
 };
 
 
-
 export const generateAccessToken = ( payload: string | object | Buffer) => {
-
-  return jwt.sign(payload, ENV.JWT_SECRET! as Secret, { expiresIn: ENV.ACCESS_TOKEN_EXPIRE  as any});
+  return jwt.sign(payload, ENV.JWT_SECRET as Secret, { expiresIn: ENV.ACCESS_TOKEN_EXPIRE as any});
 };
 
-export const generateRefreshToken = (payload: object) => {
-  return jwt.sign(payload, ENV.REFRESH_SECRET! as Secret, { expiresIn: ENV.REFRESH_TOKEN_EXPIRE as any});
+export const generateRefreshToken = (payload: string | object | Buffer) => {
+  return jwt.sign(payload, ENV.REFRESH_SECRET as Secret, { expiresIn: ENV.REFRESH_TOKEN_EXPIRE as any});
 };
 
-export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, ENV.JWT_SECRET! as Secret);
+export const verifyAccessToken = (token: string): { id: string } => {
+  const decoded = jwt.verify(token, ENV.JWT_SECRET as Secret);
+  if (typeof decoded === 'string') {
+    throw new Error('Invalid token payload');
+  }
+  return decoded as { id: string };
 };
 
 export const verifyRefreshToken = (token: string) => {
-  return jwt.verify(token, ENV.REFRESH_SECRET! as Secret);
+  const decoded = jwt.verify(token, ENV.REFRESH_SECRET as Secret);
+  if (typeof decoded === 'string') {
+    throw new Error('Invalid token payload');
+  }
+  return decoded as { id: string };
 };
-
-
 

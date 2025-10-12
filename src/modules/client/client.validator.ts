@@ -1,5 +1,4 @@
 // src/modules/client/client.validator.ts
-
 import { z } from 'zod';
 
 export const clientCreateSchema = z.object({
@@ -15,6 +14,3 @@ export const clientCreateSchema = z.object({
 });
 
 export const clientUpdateSchema = clientCreateSchema.partial();
-
-export type ClientCreateSchemaType = z.infer<typeof clientCreateSchema>;
-export type ClientUpdateSchemaType = z.infer<typeof clientUpdateSchema>;

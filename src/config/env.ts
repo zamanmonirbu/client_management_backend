@@ -1,8 +1,9 @@
+// src/config/env.ts
 import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-const requiredValues = ['PORT', 'NODE_ENV', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT'];
+const requiredValues = ['PORT', 'NODE_ENV', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT', 'JWT_SECRET', 'REFRESH_SECRET', 'ACCESS_TOKEN_EXPIRE', 'REFRESH_TOKEN_EXPIRE'];
 
 const missingValues = requiredValues.filter(key => !(key in process.env));
 

@@ -1,20 +1,17 @@
-// src/modules/client/client.validator.ts
-
+// src/modules/user/user.validator.ts
 import { z } from 'zod';
 
-export const clientCreateSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  address: z.string().min(1, 'Address is required'),
-  dob: z.string().refine(val => !Number.isNaN(Date.parse(val)), { message: 'Invalid date' }),
+export const userCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email'),
-  cell: z.string().min(5, 'Invalid phone'),
-  companyName: z.string().min(1),
-  price: z.string().min(1),
-  comments: z.string().optional().nullable(),
+  password: z.string().min(8, 'Password should be at least 8 characters'),
+  role: z.optional(z.enum(['USER', 'ADMIN'])),
+  userImage: z.optional(z.string().url('Invalid image URL')),
 });
 
-export const clientUpdateSchema = clientCreateSchema.partial();
+export const userLoginSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password should be at least 8 characters'),
+});
 
-export type ClientCreateSchemaType = z.infer<typeof clientCreateSchema>;
-export type ClientUpdateSchemaType = z.infer<typeof clientUpdateSchema>;
+export const userUpdateSchema = userCreateSchema.partial();

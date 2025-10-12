@@ -1,5 +1,4 @@
 // src/modules/client/client.service.ts
-
 import * as repo from './client.repository';
 import { ClientCreateDTO, ClientUpdateDTO } from './client.types';
 
@@ -25,18 +24,18 @@ export const listClientsService = async (page = 1, limit = 10, sortOrder: 'asc' 
 };
 
 
-export const getClientService = async (id: number) => {
+export const getClientService = async (id: string) => {
   const client = await repo.findClientById(id);
   if (!client) throw new Error('Client not found');
   return client;
 };
 
-export const updateClientService = async (id: number, payload: ClientUpdateDTO) => {
+export const updateClientService = async (id: string, payload: ClientUpdateDTO) => {
   const updated = await repo.updateClientById(id, payload);
   return updated;
 };
 
-export const deleteClientService = async (id: number) => {
+export const deleteClientService = async (id: string) => {
   await repo.deleteClientById(id);
   return;
 };

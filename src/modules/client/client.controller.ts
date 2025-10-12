@@ -1,5 +1,4 @@
 // src/modules/client/client.controller.ts
-
 import { Request, Response, NextFunction } from 'express';
 import * as service from './client.service';
 import { ClientCreateDTO } from './client.types';
@@ -31,7 +30,7 @@ export const getClients = async (req: Request, res: Response, next: NextFunction
 
 export const getClient = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const client = await service.getClientService(id);
     return generateResponse(res, 200, 'Client fetched successfully', client);
   } catch (err) {
@@ -41,7 +40,7 @@ export const getClient = async (req: Request, res: Response, next: NextFunction)
 
 export const updateClient = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const updated = await service.updateClientService(id, req.body);
     return generateResponse(res, 200, 'Client updated successfully', updated);
   } catch (err) {
@@ -51,7 +50,7 @@ export const updateClient = async (req: Request, res: Response, next: NextFuncti
 
 export const deleteClient = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     await service.deleteClientService(id);
     return generateResponse(res, 200, 'Client deleted successfully');
   } catch (err) {

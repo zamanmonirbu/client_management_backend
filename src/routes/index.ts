@@ -9,3 +9,4 @@ router.use("/clients", clientRoutes);
 router.use("/users", userRoutes);
 
 export default router;
+
