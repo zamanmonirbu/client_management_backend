@@ -7,28 +7,28 @@ import hpp from 'hpp';
 import jwt, { Secret } from 'jsonwebtoken';
 import { ENV } from '../config/env';
 
-
 export const applySecurity = (app: express.Application) => {
-    app.use(helmet());
-    app.use(cors({ origin: '*', credentials: true }));
-    app.use(express.json({ limit: '10kb' }));
-    app.use(hpp());
+  app.use(helmet());
+  app.use(cors({ origin: '*', credentials: true }));
+  app.use(express.json({ limit: '10kb' }));
+  app.use(hpp());
 
-    const limiter = rateLimit({
-        windowMs: 15 * 60 * 1000,
-        limit: 100,
-        message: 'Too many requests, please try again later.',
-    });
-    app.use(limiter);
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    message: 'Too many requests, please try again later.',
+  });
+  app.use(limiter);
 };
 
-
-export const generateAccessToken = ( payload: string | object | Buffer) => {
-  return jwt.sign(payload, ENV.JWT_SECRET as Secret, { expiresIn: ENV.ACCESS_TOKEN_EXPIRE as any});
+export const generateAccessToken = (payload: string | object | Buffer) => {
+  return jwt.sign(payload, ENV.JWT_SECRET as Secret, { expiresIn: ENV.ACCESS_TOKEN_EXPIRE as any });
 };
 
 export const generateRefreshToken = (payload: string | object | Buffer) => {
-  return jwt.sign(payload, ENV.REFRESH_SECRET as Secret, { expiresIn: ENV.REFRESH_TOKEN_EXPIRE as any});
+  return jwt.sign(payload, ENV.REFRESH_SECRET as Secret, {
+    expiresIn: ENV.REFRESH_TOKEN_EXPIRE as any,
+  });
 };
 
 export const verifyAccessToken = (token: string): { id: string } => {
@@ -46,4 +46,3 @@ export const verifyRefreshToken = (token: string) => {
   }
   return decoded as { id: string };
 };
-

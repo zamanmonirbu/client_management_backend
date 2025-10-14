@@ -27,7 +27,6 @@ export const getClients = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-
 export const getClient = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id;

@@ -1,7 +1,7 @@
 // src/server.ts
 import dotenv from 'dotenv';
 import app from './app';
-import  { connectDB, disconnectDB } from './database/connection';
+import { connectDB, disconnectDB } from './database/connection';
 import { ENV } from './config/env';
 
 dotenv.config();

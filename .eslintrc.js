@@ -1,5 +1,5 @@
 // .eslintrc.js
-import {ENV} from './src/config/env';
+import { ENV } from './src/config/env';
 
 module.exports = {
   env: {
@@ -15,7 +15,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended', 
+    'plugin:prettier/recommended',
   ],
   rules: {
     'prettier/prettier': [

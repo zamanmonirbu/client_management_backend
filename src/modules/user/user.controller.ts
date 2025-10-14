@@ -1,9 +1,7 @@
 // src/modules/user/user.controller.ts
-import { NextFunction, Request, Response } from "express";
-import * as service from "./user.service";
-import { generateResponse } from "../../utils/generateResponse";
-
-
+import { NextFunction, Request, Response } from 'express';
+import * as service from './user.service';
+import { generateResponse } from '../../utils/generateResponse';
 
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -7,7 +7,11 @@ export const createClientService = async (payload: ClientCreateDTO) => {
   return created;
 };
 
-export const listClientsService = async (page = 1, limit = 10, sortOrder: 'asc' | 'desc' = 'desc') => {
+export const listClientsService = async (
+  page = 1,
+  limit = 10,
+  sortOrder: 'asc' | 'desc' = 'desc'
+) => {
   const skip = (page - 1) * limit;
   const { clients, total } = await repo.findAllClients(skip, limit, sortOrder);
   const totalPages = Math.ceil(total / limit);
@@ -22,7 +26,6 @@ export const listClientsService = async (page = 1, limit = 10, sortOrder: 'asc' 
     },
   };
 };
-
 
 export const getClientService = async (id: string) => {
   const client = await repo.findClientById(id);
