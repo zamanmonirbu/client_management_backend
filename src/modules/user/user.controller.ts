@@ -32,7 +32,7 @@ export const refreshController = async (req: Request, res: Response, next: NextF
 
 export const logoutController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.id as string;
 
     await service.logoutService(userId);
     return generateResponse(res, 200, 'User logged out successfully');

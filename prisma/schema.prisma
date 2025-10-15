@@ -39,9 +39,13 @@ model User {
   email        String   @unique
   name         String
   password     String
-  role         Role     @default(USER)
+  role         Role     @default(ADMIN)
   userImage    String?
   refreshToken String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+generator prismaClient {
+  provider = "prisma-client-js"
 }
