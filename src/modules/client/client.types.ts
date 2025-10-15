@@ -3,7 +3,7 @@ export type ClientCreateDTO = {
   firstName: string;
   lastName: string;
   address: string;
-  dob: string;
+  dob: Date | string;
   email: string;
   cell: string;
   companyName: string;
