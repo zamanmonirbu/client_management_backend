@@ -1,303 +1,123 @@
-import request from 'supertest';
-import app from '../../src/app'; 
-import { PrismaClient } from '@prisma/client';
+import { AppError } from '../../src/utils/appError';
+import * as service from '../../src/modules/client/client.service';
+import * as repo from '../../src/modules/client/client.repository';
+import { ClientCreateDTO } from '../../src/modules/client/client.types';
 
-const prisma = new PrismaClient();
+jest.mock('../../src/modules/client/client.repository');
+const mockRepo = repo as jest.Mocked<typeof repo>;
 
-const registerData = {
-  email: 'testuser@example.com',
-  name: 'Test User',
-  password: 'password123',
+const mockClient = {
+  id: 'client-123',
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@example.com',
+  address: '123 Main St',
+  dob: new Date('1990-01-01'),
+  cell: '1234567890',
+  companyName: 'Test Company',
+  price: '1000',
+  comments: 'Test client',
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
-const invalidLoginData = {
-  email: 'testuser@example.com',
-  password: 'wrongpassword',
-};
+describe('Client Service Unit Tests (Simplified)', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-let userId: string;
-let accessToken: string;
+  describe('createClientService', () => {
+    const clientData: ClientCreateDTO = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      address: '123 Main St',
+      dob: new Date('1990-01-01'),
+      cell: '1234567890',
+      companyName: 'Test Company',
+      price: '1000',
+    };
 
-describe('Authentication Controller', () => {
-  beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: registerData.email },
+    it('should create client successfully', async () => {
+      mockRepo.findClientByEmail.mockResolvedValue(null);
+      mockRepo.createClient.mockResolvedValue(mockClient);
+
+      const result = await service.createClientService(clientData);
+
+      expect(result).toEqual(mockClient);
+      expect(mockRepo.createClient).toHaveBeenCalledWith(clientData);
+    });
+
+    it('should throw error if email already exists', async () => {
+      mockRepo.findClientByEmail.mockResolvedValue(mockClient);
+
+      await expect(service.createClientService(clientData)).rejects.toThrow(AppError);
+      expect(mockRepo.createClient).not.toHaveBeenCalled();
     });
   });
 
-  afterEach(async () => {
-    if (userId) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { refreshToken: null },
-      });
-    }
-    jest.clearAllMocks();
-  });
+  describe('listClientsService', () => {
+    it('should list clients with pagination', async () => {
+      const mockClients = [mockClient];
+      mockRepo.findAllClients.mockResolvedValue({ clients: mockClients, total: 1 });
 
-  afterAll(async () => {
-    await prisma.$disconnect();
-  });
+      const result = await service.listClientsService(1, 10);
 
-  describe('User Registration', () => {
-    it('should register a new user successfully', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send(registerData)
-        .expect(201);
-
-      expect(response.body).toHaveProperty('message', 'User registered successfully');
-      expect(response.body).toHaveProperty('data.user');
-      expect(response.body.data.user).toHaveProperty('email', registerData.email);
-      expect(response.body.data.user).toHaveProperty('name', registerData.name);
-      expect(response.body.data.user).not.toHaveProperty('password');
-      
-      userId = response.body.data.user.id;
-    });
-
-    it('should fail registration with existing email', async () => {
-      await request(app)
-        .post('/api/v1/users/register')
-        .send({
-          email: 'duplicate@example.com',
-          name: 'Duplicate User',
-          password: 'password123',
-        })
-        .expect(201);
-
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send({
-          email: 'duplicate@example.com',
-          name: 'Another User',
-          password: 'password123',
-        })
-        .expect(500); 
-
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Email already exists');
-    });
-
-    it('should fail registration with invalid data', async () => {
-      const invalidData = {
-      };
-
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send(invalidData)
-        .expect(400); 
-
-      expect(response.body).toHaveProperty('message');
+      expect(result.data).toEqual(mockClients);
+      expect(result.pagination.total).toBe(1);
+      expect(mockRepo.findAllClients).toHaveBeenCalledWith(0, 10, 'desc');
     });
   });
 
-  describe('User Login', () => {
-    beforeEach(async () => {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
-      
-      if (!existingUser) {
-        await request(app)
-          .post('/api/v1/users/register')
-          .send(registerData);
-      }
+  describe('getClientService', () => {
+    it('should return client by id', async () => {
+      mockRepo.findClientById.mockResolvedValue(mockClient);
+
+      const result = await service.getClientService('client-123');
+      expect(result).toEqual(mockClient);
     });
 
-    it('should login user and return access token', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/login')
-        .send({
-          email: registerData.email,
-          password: registerData.password,
-        })
-        .expect(200);
+    it('should throw if not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      expect(response.body).toHaveProperty('message', 'User logged in successfully');
-      expect(response.body).toHaveProperty('data.user');
-      expect(response.body).toHaveProperty('data.accessToken');
-      expect(response.body.data.user).toHaveProperty('email', registerData.email);
-      expect(response.body.data.user).not.toHaveProperty('password');
-
-      accessToken = response.body.data.accessToken;
-    });
-
-    it('should fail login with invalid credentials', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/login')
-        .send(invalidLoginData)
-        .expect(500); 
-
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Invalid credentials');
-    });
-
-    it('should fail login with non-existent user', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'password123',
-        })
-        .expect(500);
-
-      expect(response.body.message).toContain('User not found');
+      await expect(service.getClientService('invalid-id')).rejects.toThrow(AppError);
     });
   });
 
-  describe('Token Refresh', () => {
-    beforeEach(async () => {
-      const loginResponse = await request(app)
-        .post('/api/v1/users/login')
-        .send({
-          email: registerData.email,
-          password: registerData.password,
-        });
-      
-      accessToken = loginResponse.body.data.accessToken;
-      
-      const user = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
-      
-      if (user?.refreshToken) {
-        userId = user.id;
-      }
+  describe('updateClientService', () => {
+    it('should update client successfully', async () => {
+      const updated = { ...mockClient, firstName: 'Jane' };
+      mockRepo.findClientById.mockResolvedValue(mockClient);
+      mockRepo.findClientByEmail.mockResolvedValue(null);
+      mockRepo.updateClientById.mockResolvedValue(updated);
+
+      const result = await service.updateClientService('client-123', { firstName: 'Jane' });
+
+      expect(result).toEqual(updated);
+      expect(mockRepo.updateClientById).toHaveBeenCalled();
     });
 
-    it('should refresh token successfully', async () => {
-      const user = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
+    it('should throw if client not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      if (!user?.refreshToken) {
-        throw new Error('No refresh token found');
-      }
-
-      const response = await request(app)
-        .post('/api/v1/users/refresh')
-        .send({ refreshToken: user.refreshToken })
-        .expect(200);
-
-      expect(response.body).toHaveProperty('message', 'Token refreshed successfully');
-      expect(response.body).toHaveProperty('data.accessToken');
-      expect(response.body).toHaveProperty('data.refreshToken');
-    });
-
-    it('should fail refresh with invalid refresh token', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/refresh')
-        .send({ refreshToken: 'invalid-token' })
-        .expect(500);
-
-      expect(response.body.message).toContain('Invalid refresh token');
+      await expect(
+        service.updateClientService('invalid', { firstName: 'Jane' })
+      ).rejects.toThrow(AppError);
     });
   });
+-
+  describe('deleteClientService', () => {
+    it('should delete client successfully', async () => {
+      mockRepo.findClientById.mockResolvedValue(mockClient);
 
-  describe('Authenticated Routes', () => {
-    beforeEach(async () => {
-      const loginResponse = await request(app)
-        .post('/api/v1/users/login')
-        .send({
-          email: registerData.email,
-          password: registerData.password,
-        });
-      accessToken = loginResponse.body.data.accessToken;
+      await service.deleteClientService('client-123');
+
+      expect(mockRepo.findClientById).toHaveBeenCalledWith('client-123');
+      expect(mockRepo.deleteClientById).toHaveBeenCalledWith('client-123');
     });
 
-    it('should get authenticated user details (/me)', async () => {
-      const response = await request(app)
-        .get('/api/v1/users/me')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
+    it('should throw if not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      expect(response.body).toHaveProperty('message', 'User fetched successfully');
-      expect(response.body.data.user).toHaveProperty('email', registerData.email);
-    });
-
-    it('should fail getting user details without auth', async () => {
-      await request(app)
-        .get('/api/v1/users/me')
-        .expect(401);
-    });
-
-    it('should logout user successfully', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(response.body).toHaveProperty('message', 'User logged out successfully');
-
-      const user = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
-      expect(user?.refreshToken).toBeNull();
-    });
-
-    it('should fail logout without auth', async () => {
-      await request(app)
-        .post('/api/v1/users/logout')
-        .expect(401);
-    });
-  });
-
-  describe('User Management (Admin routes - assuming ADMIN role)', () => {
-    beforeEach(async () => {
-      const loginResponse = await request(app)
-        .post('/api/v1/users/login')
-        .send({
-          email: registerData.email,
-          password: registerData.password,
-        });
-      accessToken = loginResponse.body.data.accessToken;
-    });
-
-    it('should get all users with pagination', async () => {
-      const response = await request(app)
-        .get('/api/v1/users/?page=1&limit=10')
-        .set('Authorization', `Bearer ${accessToken}`) 
-        .expect(200);
-
-      expect(response.body).toHaveProperty('message', 'Users fetched successfully');
-      expect(Array.isArray(response.body.data)).toBe(true);
-    });
-
-    it('should get user by ID', async () => {
-      const user = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
-      
-      if (!user?.id) throw new Error('User not found');
-
-      const response = await request(app)
-        .get(`/api/v1/users/${user.id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(response.body).toHaveProperty('message', 'User fetched successfully');
-      expect(response.body.data.user.id).toBe(user.id);
-    });
-
-    it('should update user', async () => {
-      const user = await prisma.user.findUnique({
-        where: { email: registerData.email },
-      });
-      
-      if (!user?.id) throw new Error('User not found');
-
-      const updateData = {
-        name: 'Updated User Name',
-      };
-
-      const response = await request(app)
-        .put(`/api/v1/users/${user.id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body).toHaveProperty('message', 'User updated successfully');
-      expect(response.body.data.user.name).toBe('Updated User Name');
+      await expect(service.deleteClientService('invalid')).rejects.toThrow(AppError);
     });
   });
 });

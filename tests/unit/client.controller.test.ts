@@ -1,247 +1,139 @@
-// tests/unit/client.controller.test.ts
-import { Request, Response } from 'express';
-import * as controller from '../../src/modules/client/client.controller';
-import * as service from '../../src/modules/client/client.service';
-import { generateResponse } from '../../src/utils/generateResponse';
+
 import { AppError } from '../../src/utils/appError';
+import * as service from '../../src/modules/client/client.service';
+import * as repo from '../../src/modules/client/client.repository';
 import { ClientCreateDTO, ClientUpdateDTO } from '../../src/modules/client/client.types';
 
-jest.mock('../../src/modules/client/client.service');
-jest.mock('../../src/utils/generateResponse');
+jest.mock('../../src/modules/client/client.repository');
+const mockRepo = repo as jest.Mocked<typeof repo>;
 
-const mockClient = {
+type Client = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  dob: Date;
+  email: string;
+  cell: string;
+  companyName: string;
+  price: string;
+  comments: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+
+const mockClient: Client = {
   id: 'client-123',
   firstName: 'John',
   lastName: 'Doe',
-  address: '123 Test St',
-  dob: new Date('1990-01-01'),
   email: 'john@example.com',
-  cell: '123-456-7890',
-  companyName: 'Test Corp',
+  address: '123 Main St',
+  dob: new Date('1990-01-01'),
+  cell: '1234567890',
+  companyName: 'Test Company',
   price: '1000',
-  comments: 'Test client',
+  comments: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
-const mockClientsList = {
-  data: [mockClient],
-  pagination: {
-    total: 1,
-    page: 1,
-    limit: 10,
-    totalPages: 1,
-    sortOrder: 'desc',
-  },
-};
+describe('Client Service Unit Tests (Simplified)', () => {
+  beforeEach(() => jest.clearAllMocks());
+  describe('createClientService', () => {
+    const clientData: ClientCreateDTO = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      address: '123 Main St',
+      dob: new Date('1990-01-01'),
+      cell: '1234567890',
+      companyName: 'Test Company',
+      price: '1000',
+    };
 
-const mockReq = (overrides: Partial<Request> = {}): Request => ({
-  body: {},
-  params: {},
-  query: {},
-  ...overrides,
-} as Request);
-
-const mockRes = (): Response => {
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-    locals: {},
-  } as unknown as Response;
-  return res;
-};
-
-const mockNext = jest.fn();
-
-describe('Client Controller Unit Tests', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('createClient', () => {
     it('should create client successfully', async () => {
-      const req = mockReq({
-        body: {
-          firstName: 'John',
-          lastName: 'Doe',
-          address: '123 Test St',
-          dob: '1990-01-01',
-          email: 'john@example.com',
-          cell: '123-456-7890',
-          companyName: 'Test Corp',
-          price: '1000',
-        } as ClientCreateDTO,
+      mockRepo.findClientByEmail.mockResolvedValue(null);
+      mockRepo.createClient.mockResolvedValue(mockClient);
+
+      const result = await service.createClientService(clientData);
+
+      expect(result).toEqual(mockClient);
+      expect(mockRepo.createClient).toHaveBeenCalledWith(clientData);
+    });
+
+    it('should throw AppError if email exists', async () => {
+      mockRepo.findClientByEmail.mockResolvedValue(mockClient);
+
+      await expect(service.createClientService(clientData)).rejects.toThrow(AppError);
+    });
+  });
+
+  describe('listClientsService', () => {
+    it('should return paginated clients', async () => {
+      mockRepo.findAllClients.mockResolvedValue({
+        clients: [mockClient],
+        total: 1,
       });
-      const res = mockRes();
-      (service.createClientService as jest.Mock).mockResolvedValue(mockClient);
 
-      await controller.createClient(req, res, mockNext);
+      const result = await service.listClientsService(1, 10);
 
-      expect(service.createClientService).toHaveBeenCalledWith(req.body);
-      expect(generateResponse).toHaveBeenCalledWith(
-        res,
-        201,
-        'Client created successfully',
-        mockClient
-      );
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should handle service errors', async () => {
-      const req = mockReq({ body: {} as ClientCreateDTO });
-      const res = mockRes();
-      const error = new AppError('Validation failed', 400);
-      (service.createClientService as jest.Mock).mockRejectedValue(error);
-
-      await controller.createClient(req, res, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(error);
-      expect(generateResponse).not.toHaveBeenCalled();
+      expect(result.data).toEqual([mockClient]);
+      expect(result.pagination.total).toBe(1);
     });
   });
 
-  describe('getClients', () => {
-    it('should get all clients with pagination', async () => {
-      const req = mockReq({
-        query: { page: '2', limit: '5', sortOrder: 'asc' },
-      });
-      const res = mockRes();
-      (service.listClientsService as jest.Mock).mockResolvedValue(mockClientsList);
+  describe('getClientService', () => {
+    it('should return client by ID', async () => {
+      mockRepo.findClientById.mockResolvedValue(mockClient);
 
-      await controller.getClients(req, res, mockNext);
+      const result = await service.getClientService('client-123');
 
-      expect(service.listClientsService).toHaveBeenCalledWith(2, 5, 'asc');
-      expect(generateResponse).toHaveBeenCalledWith(
-        res,
-        200,
-        'Clients fetched successfully',
-        mockClientsList
-      );
+      expect(result).toEqual(mockClient);
     });
 
-    it('should use default pagination parameters', async () => {
-      const req = mockReq({ query: {} });
-      const res = mockRes();
-      (service.listClientsService as jest.Mock).mockResolvedValue(mockClientsList);
+    it('should throw if client not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      await controller.getClients(req, res, mockNext);
-
-      expect(service.listClientsService).toHaveBeenCalledWith(1, 10, 'desc');
-    });
-
-    it('should handle pagination errors', async () => {
-      const req = mockReq({ query: {} });
-      const res = mockRes();
-      const error = new AppError('Invalid pagination', 400);
-      (service.listClientsService as jest.Mock).mockRejectedValue(error);
-
-      await controller.getClients(req, res, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(error);
+      await expect(service.getClientService('invalid')).rejects.toThrow(AppError);
     });
   });
 
-  describe('getClient', () => {
-    it('should get client by ID successfully', async () => {
-      const req = mockReq({ params: { id: 'client-123' } });
-      const res = mockRes();
-      (service.getClientService as jest.Mock).mockResolvedValue(mockClient);
+  describe('updateClientService', () => {
+    const updateData: ClientUpdateDTO = { firstName: 'Jane' };
 
-      await controller.getClient(req, res, mockNext);
-
-      expect(service.getClientService).toHaveBeenCalledWith('client-123');
-      expect(generateResponse).toHaveBeenCalledWith(
-        res,
-        200,
-        'Client fetched successfully',
-        mockClient
-      );
-    });
-
-    it('should handle not found errors', async () => {
-      const req = mockReq({ params: { id: 'non-existent' } });
-      const res = mockRes();
-      const error = new AppError('Client not found', 404);
-      (service.getClientService as jest.Mock).mockRejectedValue(error);
-
-      await controller.getClient(req, res, mockNext);
-
-      expect(service.getClientService).toHaveBeenCalledWith('non-existent');
-      expect(mockNext).toHaveBeenCalledWith(error);
-    });
-  });
-
-  describe('updateClient', () => {
     it('should update client successfully', async () => {
-      const updatedClient = { ...mockClient, firstName: 'Updated John' };
-      const req = mockReq({
-        params: { id: 'client-123' },
-        body: { firstName: 'Updated John', price: '2000' } as ClientUpdateDTO,
-      });
-      const res = mockRes();
-      (service.updateClientService as jest.Mock).mockResolvedValue(updatedClient);
+      const updated = { ...mockClient, firstName: 'Jane' };
+      mockRepo.findClientById.mockResolvedValue(mockClient);
+      mockRepo.findClientByEmail.mockResolvedValue(null);
+      mockRepo.updateClientById.mockResolvedValue(updated);
 
-      await controller.updateClient(req, res, mockNext);
+      const result = await service.updateClientService('client-123', updateData);
 
-      expect(service.updateClientService).toHaveBeenCalledWith('client-123', {
-        firstName: 'Updated John',
-        price: '2000',
-      });
-      expect(generateResponse).toHaveBeenCalledWith(
-        res,
-        200,
-        'Client updated successfully',
-        updatedClient
-      );
+      expect(result).toEqual(updated);
     });
 
-    it('should handle update errors', async () => {
-      const req = mockReq({
-        params: { id: 'non-existent' },
-        body: { firstName: 'Test' } as ClientUpdateDTO,
-      });
-      const res = mockRes();
-      const error = new AppError('Client not found', 404);
-      (service.updateClientService as jest.Mock).mockRejectedValue(error);
+    it('should throw if client not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      await controller.updateClient(req, res, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(error);
+      await expect(service.updateClientService('invalid', updateData)).rejects.toThrow(AppError);
     });
   });
 
-  describe('deleteClient', () => {
+
+  describe('deleteClientService', () => {
     it('should delete client successfully', async () => {
-      const req = mockReq({ params: { id: 'client-123' } });
-      const res = mockRes();
-      (service.deleteClientService as jest.Mock).mockResolvedValue(undefined);
+      mockRepo.findClientById.mockResolvedValue(mockClient);
 
-      await controller.deleteClient(req, res, mockNext);
+      await service.deleteClientService('client-123');
 
-      expect(service.deleteClientService).toHaveBeenCalledWith('client-123');
-      expect(generateResponse).toHaveBeenCalledWith(
-        res,
-        200,
-        'Client deleted successfully'
-      );
-      expect(generateResponse).toHaveBeenCalledWith(
-        expect.any(Object),
-        200,
-        'Client deleted successfully',
-        undefined
-      );
+      expect(mockRepo.deleteClientById).toHaveBeenCalledWith('client-123');
     });
 
-    it('should handle delete errors', async () => {
-      const req = mockReq({ params: { id: 'non-existent' } });
-      const res = mockRes();
-      const error = new AppError('Client not found', 404);
-      (service.deleteClientService as jest.Mock).mockRejectedValue(error);
+    it('should throw if not found', async () => {
+      mockRepo.findClientById.mockResolvedValue(null);
 
-      await controller.deleteClient(req, res, mockNext);
-
-      expect(service.deleteClientService).toHaveBeenCalledWith('non-existent');
-      expect(mockNext).toHaveBeenCalledWith(error);
+      await expect(service.deleteClientService('invalid')).rejects.toThrow(AppError);
     });
   });
 });

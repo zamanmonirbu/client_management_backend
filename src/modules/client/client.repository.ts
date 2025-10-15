@@ -3,22 +3,14 @@ import prisma from '../../database/connection';
 import { ClientCreateDTO, ClientUpdateDTO } from './client.types';
 
 export const createClient = async (data: ClientCreateDTO) => {
-  return prisma.client.create({
-    data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      address: data.address,
-      dob: new Date(data.dob),
-      email: data.email,
-      cell: data.cell,
-      companyName: data.companyName,
-      price: data.price,
-      comments: data.comments ?? null,
-    },
-  });
+  return prisma.client.create({ data });
 };
 
-export const findAllClients = async (skip = 0, take = 10, sortOrder: 'asc' | 'desc' = 'desc') => {
+export const findAllClients = async (
+  skip: number,
+  take: number,
+  sortOrder: 'asc' | 'desc'
+) => {
   const [clients, total] = await Promise.all([
     prisma.client.findMany({
       skip,
@@ -27,7 +19,6 @@ export const findAllClients = async (skip = 0, take = 10, sortOrder: 'asc' | 'de
     }),
     prisma.client.count(),
   ]);
-
   return { clients, total };
 };
 
@@ -35,10 +26,12 @@ export const findClientById = async (id: string) => {
   return prisma.client.findUnique({ where: { id } });
 };
 
+export const findClientByEmail = async (email: string) => {
+  return prisma.client.findUnique({ where: { email } });
+};
+
 export const updateClientById = async (id: string, data: ClientUpdateDTO) => {
-  const payload: any = { ...data };
-  if (payload.dob) payload.dob = new Date(payload.dob);
-  return prisma.client.update({ where: { id }, data: payload });
+  return prisma.client.update({ where: { id }, data });
 };
 
 export const deleteClientById = async (id: string) => {
