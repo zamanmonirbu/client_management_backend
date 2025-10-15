@@ -8,66 +8,78 @@ on:
 
 jobs:
   test:
+    name: Run Tests
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DATABASE_URL: mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
+      PORT: 5000
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
+      ACCESS_TOKEN_EXPIRE: 15m
+      REFRESH_TOKEN_EXPIRE: 7d
+
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Generate Prisma client
+      - name: 🔧 Generate Prisma client
         run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
 
-      - name: Run migrations
+      - name: 🗄️ Run Prisma migrations
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
 
-      - name: Run tests
+      - name: 🧪 Run tests with coverage
         run: npm test -- --coverage
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
 
-      - name: Upload coverage report
+      - name: ☁️ Upload coverage report
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: true
 
   deploy:
+    name: Deploy to Render
     needs: test
-    if: github.ref == 'refs/heads/main' # Deploy only on main branch
+    if: github.ref == 'refs/heads/main'  # Deploy only from main branch
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DATABASE_URL: mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
+      RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Build
+      - name: 🏗️ Build project
         run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
 
-      - name: Deploy to Render
+      - name: 🚀 Deploy to Render
         run: curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}
-        env:
-          RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
