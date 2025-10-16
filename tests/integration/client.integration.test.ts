@@ -26,9 +26,9 @@ describe('Client Controller Integration (Simplified)', () => {
   };
 
   beforeAll(async () => {
-    await prisma.client.deleteMany({
-      where: { email: { in: [clientData.email] } },
-    });
+    // await prisma.client.deleteMany({
+    //   where: { email: { in: [clientData.email] } },
+    // });
 
     const loginRes = await request(app)
       .post('/api/v1/users/login')
