@@ -2,6 +2,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+jest.setTimeout(30000);
+
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
 });
@@ -9,7 +11,7 @@ const prisma = new PrismaClient({
 beforeAll(async () => {
   try {
     await prisma.$connect();
-    await prisma.client.deleteMany();
+    // await prisma.client.deleteMany();
     await prisma.user.deleteMany({ where: { email: { in: ['testuser@example.com'] } } });
 
     const hashedPassword = await bcrypt.hash('password123', 10);
