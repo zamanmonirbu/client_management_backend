@@ -8,8 +8,9 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: 🧪 Run Tests
     runs-on: ubuntu-latest
+
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
@@ -33,7 +34,7 @@ jobs:
           node-version: '18'
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: 🔧 Generate Prisma client
         run: npx prisma generate
@@ -47,17 +48,21 @@ jobs:
       - name: 🧪 Run tests with coverage
         run: npm test -- --coverage
 
-      - name: ☁️ Upload coverage report
+      - name: ☁️ Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }} # ✅ Fix rate limit issue
           files: ./coverage/lcov.info
+          flags: backend
           fail_ci_if_error: true
+          verbose: true
 
   deploy:
-    name: Deploy to Render
+    name: 🚀 Deploy to Render
     needs: test
-    if: github.ref == 'refs/heads/main'  # Deploy only from main branch
+    if: github.ref == 'refs/heads/main' # Deploy only from main branch
     runs-on: ubuntu-latest
+
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
@@ -68,6 +73,7 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
       RENDER_TOKEN: ${{ secrets.RENDER_TOKEN }}
+      RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
 
     steps:
       - name: 🧾 Checkout code
@@ -79,10 +85,13 @@ jobs:
           node-version: '18'
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: 🏗️ Build project
         run: npm run build
 
-      - name: 🚀 Deploy to Render
-        run: curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}
+      - name: 🚀 Trigger Render Deployment
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.RENDER_TOKEN }}" \
+            https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
