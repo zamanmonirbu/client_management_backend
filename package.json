@@ -22,6 +22,7 @@
     "test:auth": "jest --config jest.unit.config.js tests/unit --testPathPattern='auth|user'"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
     "@types/jsonwebtoken": "^9.0.10",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -35,7 +36,6 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@prisma/client": "^6.17.1",
     "@types/bcrypt": "^6.0.0",
     "@types/connect": "^3.4.38",
     "@types/cors": "^2.8.19",
